@@ -14,7 +14,7 @@ int main(void)
 
     int mode = 0; // 0: none, 1: sand, 2: stone, 3: water
 
-    int cellSize = 20;
+    int cellSize = 10;
     int rows = screenHeight / cellSize;    // rows based on screen height shuld be 72
     int collums = screenWidth / cellSize;  // columns based on screen width shuld be 128
     
