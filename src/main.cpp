@@ -11,9 +11,10 @@ struct Config {
 };
 
 Config loadConfig(const std::string& filename) {
-    Config config = {1280, 720, 20}; // Default values
+    Config config = {1280, 720, 20}; // default values
     std::ifstream configFile(filename);
 
+    // safety net
     if (!configFile.is_open()) {
         std::cerr << "Warning: Could not open config file: " << filename << ". Using default values." << std::endl;
         return config;
