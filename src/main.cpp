@@ -9,6 +9,78 @@ enum ParticleType
     WATER = 3,
 };
 
+void moveSand(int x, int y, std::vector<std::vector<ParticleType>>& grid, std::vector<std::vector<bool>>& moved, int rows, int collums) {
+    // Try to move down
+    if (y + 1 < rows && grid[y + 1][x] == EMPTY) {
+        grid[y][x] = EMPTY;
+        grid[y + 1][x] = SAND;
+        moved[y + 1][x] = true;
+        return;
+    }
+
+    // Try to move diagonally
+    int direction = (GetRandomValue(0, 1) == 0) ? -1 : 1;
+    if (x + direction >= 0 && x + direction < collums && y + 1 < rows && grid[y + 1][x + direction] == EMPTY) {
+        grid[y][x] = EMPTY;
+        grid[y + 1][x + direction] = SAND;
+        moved[y + 1][x + direction] = true;
+    } else if (x - direction >= 0 && x - direction < collums && y + 1 < rows && grid[y + 1][x - direction] == EMPTY) {
+        grid[y][x] = EMPTY;
+        grid[y + 1][x - direction] = SAND;
+        moved[y + 1][x - direction] = true;
+    }
+}
+
+void moveWater(int x, int y, std::vector<std::vector<ParticleType>>& grid, std::vector<std::vector<bool>>& moved, int rows, int collums) {
+    // Try to move down
+    if (y + 1 < rows && grid[y + 1][x] == EMPTY) {
+        grid[y][x] = EMPTY;
+        grid[y + 1][x] = WATER;
+        moved[y + 1][x] = true;
+        return;
+    }
+
+    // Try to move diagonally
+    int direction = (GetRandomValue(0, 1) == 0) ? -1 : 1;
+    if (x + direction >= 0 && x + direction < collums && y + 1 < rows && grid[y + 1][x + direction] == EMPTY) {
+        grid[y][x] = EMPTY;
+        grid[y + 1][x + direction] = WATER;
+        moved[y + 1][x + direction] = true;
+        return;
+    } else if (x - direction >= 0 && x - direction < collums && y + 1 < rows && grid[y + 1][x - direction] == EMPTY) {
+        grid[y][x] = EMPTY;
+        grid[y + 1][x - direction] = WATER;
+        moved[y + 1][x - direction] = true;
+        return;
+    }
+
+    // Try to move horizontally
+    direction = (GetRandomValue(0, 1) == 0) ? -1 : 1;
+    if (x + direction >= 0 && x + direction < collums && grid[y][x + direction] == EMPTY) {
+        grid[y][x] = EMPTY;
+        grid[y][x + direction] = WATER;
+        moved[y][x + direction] = true;
+    } else if (x - direction >= 0 && x - direction < collums && grid[y][x - direction] == EMPTY) {
+        grid[y][x] = EMPTY;
+        grid[y][x - direction] = WATER;
+        moved[y][x - direction] = true;
+    }
+}
+
+void updateParticles(std::vector<std::vector<ParticleType>>& grid, std::vector<std::vector<bool>>& moved, int rows, int collums) {
+    for (int y = rows - 2; y >= 0; y--) {
+        for (int x = 0; x < collums; x++) {
+            if (!moved[y][x]) {
+                if (grid[y][x] == SAND) {
+                    moveSand(x, y, grid, moved, rows, collums);
+                } else if (grid[y][x] == WATER) {
+                    moveWater(x, y, grid, moved, rows, collums);
+                }
+            }
+        }
+    }
+}
+
 int main(void)
 {
 
@@ -22,13 +94,11 @@ int main(void)
     ParticleType selectedParticle = SAND;
 
     int cellSize = 20;
-    int rows = screenHeight / cellSize;    // rows based on screen height shuld be 72
-    int collums = screenWidth / cellSize;  // columns based on screen width shuld be 128
+    int rows = screenHeight / cellSize;
+    int collums = screenWidth / cellSize;
     
-    std::vector<std::vector<ParticleType>> grid(rows, std::vector<ParticleType>(collums, EMPTY)); // empty grid
-    std::vector<std::vector<bool>> moved(rows, std::vector<bool>(collums, false)); // used to track if a cell has been moved this frame
-
-    
+    std::vector<std::vector<ParticleType>> grid(rows, std::vector<ParticleType>(collums, EMPTY));
+    std::vector<std::vector<bool>> moved(rows, std::vector<bool>(collums, false));
 
     InitWindow(screenWidth, screenHeight, "sand particle simulator");
 
@@ -49,7 +119,7 @@ int main(void)
             }
         }
 
-        int gridX = GetMouseX() / cellSize; // x pixel to a grid collum same for y
+        int gridX = GetMouseX() / cellSize;
         int gridY = GetMouseY() / cellSize;
 
         // making cursor hidden
@@ -89,7 +159,7 @@ int main(void)
             {
                 if (gridY >= 0 && gridY < rows && gridX >= 0 && gridX < collums)
                 {
-                    grid[gridY][gridX] = selectedParticle; // placing sand, stone, or water
+                    grid[gridY][gridX] = selectedParticle;
                 }
             }
         }
@@ -98,105 +168,7 @@ int main(void)
 
         ClearBackground(BROWN);
 
-        // loop from bottom to top for so particle falls correctly  
-        for (int y = rows - 2; y >= 0; y--)
-        {
-            for (int x = 0; x < collums; x++)
-            {
-                // check if current cell is sand or water and hasn't moved this frame
-                if ((grid[y][x] == SAND || grid[y][x] == WATER) && !moved[y][x])
-                {
-                    // check if the cell below is empty
-                    if (y + 1 < rows && grid[y + 1][x] == EMPTY)
-                    {
-                        // move particle down
-                        grid[y + 1][x] = grid[y][x];
-                        grid[y][x] = EMPTY;
-                        moved[y + 1][x] = true;
-                    }
-                    else
-                    {
-                        // randomly choose left or right direction
-                        int randomDirection = GetRandomValue(0, 1);
-                        
-                        // try both left and right directions
-                        for (int i = 0; i < 2; i++)
-                        {
-                            // calculate horizontal direction (-1 for left, 1 for right)
-                            int dx = (randomDirection + i) % 2 == 0 ? -1 : 1;
-
-                            // check if new position is within grid bounds
-                            if (x + dx >= 0 && x + dx < collums && y + 1 < rows)
-                            {
-                                // handle sand movement
-                                if (grid[y][x] == SAND)
-                                {
-                                    // check if diagonal cell is empty
-                                    if (grid[y + 1][x + dx] == EMPTY)
-                                    {
-                                        // move sand diagonally
-                                        grid[y + 1][x + dx] = SAND;
-                                        grid[y][x] = EMPTY;
-                                        moved[y + 1][x + dx] = true;
-                                        break;
-                                    }
-                                }
-                                // handle water movement
-                                else if (grid[y][x] == WATER)
-                                {
-                                    bool hasMovedWater = false;
-
-                                    // try to move straight down
-                                    if (grid[y + 1][x] == EMPTY)
-                                    {
-                                        grid[y + 1][x] = WATER;
-                                        grid[y][x] = EMPTY;
-                                        moved[y + 1][x] = true;
-                                        hasMovedWater = true;
-                                    }
-                                    else
-                                    {
-                                        // if moving down doesnt work try diagonal movements
-                                        int directions[] = {-1, 1};
-                                        for (int j = 0; j < 2 && !hasMovedWater; j++)
-                                        {
-                                            int dx_water = directions[GetRandomValue(0, 1)];
-                                            if (x + dx_water >= 0 && x + dx_water < collums && grid[y + 1][x + dx_water] == EMPTY)
-                                            {
-                                                grid[y + 1][x + dx_water] = WATER;
-                                                grid[y][x] = EMPTY;
-                                                moved[y + 1][x + dx_water] = true;
-                                                hasMovedWater = true;
-                                            }
-                                        }
-
-                                        // if still hasnt moved try horizontal movement
-                                        if (!hasMovedWater)
-                                        {
-                                            for (int j = 0; j < 2 && !hasMovedWater; j++)
-                                            {
-                                                int dx_water = directions[GetRandomValue(0, 1)];
-                                                if (x + dx_water >= 0 && x + dx_water < collums && grid[y][x + dx_water] == EMPTY)
-                                                {
-                                                    grid[y][x + dx_water] = WATER;
-                                                    grid[y][x] = EMPTY;
-                                                    moved[y][x + dx_water] = true;
-                                                    hasMovedWater = true;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if (hasMovedWater)
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        updateParticles(grid, moved, rows, collums);
 
         // drawing whether sand or stone or water
         for (int y = 0; y < rows; y++)
@@ -205,15 +177,15 @@ int main(void)
             {
                 if (grid[y][x] == SAND)
                 {
-                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, YELLOW); // Sand
+                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, YELLOW);
                 }
                 else if (grid[y][x] == STONE)
                 {
-                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, GRAY); // Stone
+                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, GRAY);
                 }
                 else if (grid[y][x] == WATER)
                 {
-                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, BLUE); // Water
+                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, BLUE);
                 }
             }
         }
