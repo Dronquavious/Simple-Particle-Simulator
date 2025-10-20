@@ -1,5 +1,54 @@
 #include "raylib.h"
 #include <vector>
+#include <fstream>
+#include <string>
+#include <iostream>
+
+struct Config {
+    int screenWidth;
+    int screenHeight;
+    int cellSize;
+};
+
+Config loadConfig(const std::string& filename) {
+    Config config = {1280, 720, 20}; // Default values
+    std::ifstream configFile(filename);
+
+    if (!configFile.is_open()) {
+        std::cerr << "Warning: Could not open config file: " << filename << ". Using default values." << std::endl;
+        return config;
+    }
+
+    std::string line;
+    while (std::getline(configFile, line)) {
+        size_t delimiterPos = line.find('=');
+        if (delimiterPos != std::string::npos) {
+            std::string key = line.substr(0, delimiterPos);
+            std::string valueStr = line.substr(delimiterPos + 1);
+            
+            key.erase(0, key.find_first_not_of(" \t"));
+            key.erase(key.find_last_not_of(" \t") + 1);
+            valueStr.erase(0, valueStr.find_first_not_of(" \t"));
+            valueStr.erase(valueStr.find_last_not_of(" \t") + 1);
+
+            try {
+                int value = std::stoi(valueStr);
+                if (key == "screenWidth") {
+                    config.screenWidth = value;
+                } else if (key == "screenHeight") {
+                    config.screenHeight = value;
+                } else if (key == "cellSize") {
+                    config.cellSize = value;
+                }
+            } catch (const std::invalid_argument& e) {
+                std::cerr << "Warning: Invalid value for key '" << key << "' in config file." << std::endl;
+            }
+        }
+    }
+
+    configFile.close();
+    return config;
+}
 
 enum ParticleType
 {
@@ -83,9 +132,11 @@ void updateParticles(std::vector<std::vector<ParticleType>>& grid, std::vector<s
 
 int main(void)
 {
+    Config config = loadConfig("config.ini");
 
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
+    const int screenWidth = config.screenWidth;
+    const int screenHeight = config.screenHeight;
+    const int cellSize = config.cellSize;
 
     // --------------------------------------------------------------------------------------------------------
     // 2d grid to represent where sand is falling
@@ -93,7 +144,6 @@ int main(void)
 
     ParticleType selectedParticle = SAND;
 
-    int cellSize = 20;
     int rows = screenHeight / cellSize;
     int collums = screenWidth / cellSize;
     
