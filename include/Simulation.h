@@ -7,6 +7,7 @@ enum ParticleType {
     SAND = 1,
     STONE = 2,
     WATER = 3,
+    SMOKE = 4,
     // new elements will be added here
 };
 
@@ -39,5 +40,6 @@ private:
     // internal physics helpers (Private because only Update() uses them)
     void MoveSand(int x, int y);
     void MoveWater(int x, int y);
+    void MoveSmoke(int x, int y);
     bool IsWithinBounds(int x, int y);
 };

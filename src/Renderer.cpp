@@ -26,6 +26,7 @@ void Renderer::Draw(const Simulation& simulation) {
                 case SAND:  color = YELLOW; break;
                 case STONE: color = DARKGRAY; break;
                 case WATER: color = BLUE; break;
+                case SMOKE: color = LIGHTGRAY; break;
                 default:    color = MAGENTA; break; // error color
                 }
 
