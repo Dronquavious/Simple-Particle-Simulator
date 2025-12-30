@@ -1,9 +1,10 @@
 #include "raylib.h"
-#include <vector>
+#include "Simulation.h"
+#include <iostream>
 #include <fstream>
 #include <string>
-#include <iostream>
 
+// --- Config Loading (will move this to Utils.h later) ---
 struct Config {
     int screenWidth;
     int screenHeight;
@@ -11,12 +12,11 @@ struct Config {
 };
 
 Config loadConfig(const std::string& filename) {
-    Config config = {1280, 720, 20}; // default values
+    Config config = { 1280, 720, 20 }; // default values
     std::ifstream configFile(filename);
 
-    // safety net
     if (!configFile.is_open()) {
-        std::cerr << "Warning: Could not open config file: " << filename << ". Using default values." << std::endl;
+        std::cerr << "Warning: Could not open config file. Using defaults." << std::endl;
         return config;
     }
 
@@ -26,7 +26,8 @@ Config loadConfig(const std::string& filename) {
         if (delimiterPos != std::string::npos) {
             std::string key = line.substr(0, delimiterPos);
             std::string valueStr = line.substr(delimiterPos + 1);
-            
+
+            // simple whitespace trim
             key.erase(0, key.find_first_not_of(" \t"));
             key.erase(key.find_last_not_of(" \t") + 1);
             valueStr.erase(0, valueStr.find_first_not_of(" \t"));
@@ -34,227 +35,86 @@ Config loadConfig(const std::string& filename) {
 
             try {
                 int value = std::stoi(valueStr);
-                if (key == "screenWidth") {
-                    config.screenWidth = value;
-                } else if (key == "screenHeight") {
-                    config.screenHeight = value;
-                } else if (key == "cellSize") {
-                    config.cellSize = value;
-                }
-            } catch (const std::invalid_argument& e) {
-                std::cerr << "Warning: Invalid value for key '" << key << "' in config file." << std::endl;
+                if (key == "screenWidth") config.screenWidth = value;
+                else if (key == "screenHeight") config.screenHeight = value;
+                else if (key == "cellSize") config.cellSize = value;
             }
+            catch (...) {}
         }
     }
-
-    configFile.close();
     return config;
 }
 
-enum ParticleType
-{
-    EMPTY = 0,
-    SAND = 1,
-    STONE = 2,
-    WATER = 3,
-};
-
-void moveSand(int x, int y, std::vector<std::vector<ParticleType>>& grid, std::vector<std::vector<bool>>& moved, int rows, int collums) {
-    // Try to move down
-    if (y + 1 < rows && grid[y + 1][x] == EMPTY) {
-        grid[y][x] = EMPTY;
-        grid[y + 1][x] = SAND;
-        moved[y + 1][x] = true;
-        return;
-    }
-
-    // Try to move diagonally
-    int direction = (GetRandomValue(0, 1) == 0) ? -1 : 1;
-    if (x + direction >= 0 && x + direction < collums && y + 1 < rows && grid[y + 1][x + direction] == EMPTY) {
-        grid[y][x] = EMPTY;
-        grid[y + 1][x + direction] = SAND;
-        moved[y + 1][x + direction] = true;
-    } else if (x - direction >= 0 && x - direction < collums && y + 1 < rows && grid[y + 1][x - direction] == EMPTY) {
-        grid[y][x] = EMPTY;
-        grid[y + 1][x - direction] = SAND;
-        moved[y + 1][x - direction] = true;
-    }
-}
-
-void moveWater(int x, int y, std::vector<std::vector<ParticleType>>& grid, std::vector<std::vector<bool>>& moved, int rows, int collums) {
-    // Try to move down
-    if (y + 1 < rows && grid[y + 1][x] == EMPTY) {
-        grid[y][x] = EMPTY;
-        grid[y + 1][x] = WATER;
-        moved[y + 1][x] = true;
-        return;
-    }
-
-    // Try to move diagonally
-    int direction = (GetRandomValue(0, 1) == 0) ? -1 : 1;
-    if (x + direction >= 0 && x + direction < collums && y + 1 < rows && grid[y + 1][x + direction] == EMPTY) {
-        grid[y][x] = EMPTY;
-        grid[y + 1][x + direction] = WATER;
-        moved[y + 1][x + direction] = true;
-        return;
-    } else if (x - direction >= 0 && x - direction < collums && y + 1 < rows && grid[y + 1][x - direction] == EMPTY) {
-        grid[y][x] = EMPTY;
-        grid[y + 1][x - direction] = WATER;
-        moved[y + 1][x - direction] = true;
-        return;
-    }
-
-    // Try to move horizontally
-    direction = (GetRandomValue(0, 1) == 0) ? -1 : 1;
-    if (x + direction >= 0 && x + direction < collums && grid[y][x + direction] == EMPTY) {
-        grid[y][x] = EMPTY;
-        grid[y][x + direction] = WATER;
-        moved[y][x + direction] = true;
-    } else if (x - direction >= 0 && x - direction < collums && grid[y][x - direction] == EMPTY) {
-        grid[y][x] = EMPTY;
-        grid[y][x - direction] = WATER;
-        moved[y][x - direction] = true;
-    }
-}
-
-void updateParticles(std::vector<std::vector<ParticleType>>& grid, std::vector<std::vector<bool>>& moved, int rows, int collums) {
-    for (int y = rows - 2; y >= 0; y--) {
-        for (int x = 0; x < collums; x++) {
-            if (!moved[y][x]) {
-                if (grid[y][x] == SAND) {
-                    moveSand(x, y, grid, moved, rows, collums);
-                } else if (grid[y][x] == WATER) {
-                    moveWater(x, y, grid, moved, rows, collums);
-                }
-            }
-        }
-    }
-}
-
-int main(void)
-{
+// --- Main Entry Point ---
+int main() {
+    // load Settings
     Config config = loadConfig("config.ini");
+    int cellSize = config.cellSize;
 
-    const int screenWidth = config.screenWidth;
-    const int screenHeight = config.screenHeight;
-    const int cellSize = config.cellSize;
-
-    // --------------------------------------------------------------------------------------------------------
-    // 2d grid to represent where sand is falling
-    // EMPTY represent empty, SAND represents sand, STONE represent stone, WATER water
-
-    ParticleType selectedParticle = SAND;
-
-    int rows = screenHeight / cellSize;
-    int collums = screenWidth / cellSize;
-    
-    std::vector<std::vector<ParticleType>> grid(rows, std::vector<ParticleType>(collums, EMPTY));
-    std::vector<std::vector<bool>> moved(rows, std::vector<bool>(collums, false));
-
-    InitWindow(screenWidth, screenHeight, "sand particle simulator");
-
-    bool isCursorHidden = false;
-
+    // setup Window
+    InitWindow(config.screenWidth, config.screenHeight, "Advanced Particle Sim");
     SetTargetFPS(60);
 
-    // main game loop
-    while (!WindowShouldClose())
-    {
+    // create the Simulation Instance
+    Simulation simulation(config.screenWidth, config.screenHeight, cellSize);
 
-        // reset the moved grid at the start of each frame
-        for (int y = 0; y < rows; y++)
-        {
-            for (int x = 0; x < collums; x++)
-            {
-                moved[y][x] = false;
-            }
-        }
+    // variables for input
+    ParticleType currentType = SAND;
+    bool isCursorHidden = false;
 
-        int gridX = GetMouseX() / cellSize;
-        int gridY = GetMouseY() / cellSize;
+    // --- Main Game Loop ---
+    while (!WindowShouldClose()) {
 
-        // making cursor hidden
-        if (IsKeyPressed(KEY_H))
-        {
+        if (IsKeyPressed(KEY_H)) {
             isCursorHidden = !isCursorHidden;
-            if (isCursorHidden)
-            {
-                HideCursor();
-            }
-            else
-            {
-                ShowCursor();
-            }
+            if (isCursorHidden) HideCursor(); else ShowCursor();
         }
 
-        // mode changing
-        if (IsKeyPressed(KEY_E))
-        {
-            selectedParticle = WATER;
+        if (IsKeyPressed(KEY_Q)) currentType = SAND;
+        if (IsKeyPressed(KEY_W)) currentType = STONE;
+        if (IsKeyPressed(KEY_E)) currentType = WATER;
+
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            Vector2 mousePos = GetMousePosition();
+            int gridX = (int)mousePos.x / cellSize;
+            int gridY = (int)mousePos.y / cellSize;
+
+            simulation.SetParticle(gridX, gridY, currentType);
         }
 
-        if (IsKeyPressed(KEY_Q))
-        {
-            selectedParticle = SAND;
-        }
+        simulation.Update();
 
-        if (IsKeyPressed(KEY_W))
-        {
-            selectedParticle = STONE;
-        }
-
-        // Update the mode handling
-        if (selectedParticle != EMPTY)
-        {
-            if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-            {
-                if (gridY >= 0 && gridY < rows && gridX >= 0 && gridX < collums)
-                {
-                    grid[gridY][gridX] = selectedParticle;
-                }
-            }
-        }
 
         BeginDrawing();
+        ClearBackground(BLACK); // changed to black for better contrast
 
-        ClearBackground(BROWN);
+        // draw the Grid
+        const auto& grid = simulation.GetGrid();
+        int rows = simulation.GetRows();
+        int cols = simulation.GetCols();
 
-        updateParticles(grid, moved, rows, collums);
+        for (int y = 0; y < rows; y++) {
+            for (int x = 0; x < cols; x++) {
+                if (grid[y][x] != EMPTY) {
+                    Color color = BLACK;
+                    if (grid[y][x] == SAND) color = YELLOW;
+                    else if (grid[y][x] == STONE) color = DARKGRAY;
+                    else if (grid[y][x] == WATER) color = BLUE;
 
-        // drawing whether sand or stone or water
-        for (int y = 0; y < rows; y++)
-        {
-            for (int x = 0; x < collums; x++)
-            {
-                if (grid[y][x] == SAND)
-                {
-                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, YELLOW);
-                }
-                else if (grid[y][x] == STONE)
-                {
-                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, GRAY);
-                }
-                else if (grid[y][x] == WATER)
-                {
-                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, BLUE);
+                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, color);
                 }
             }
         }
 
-        if (isCursorHidden)
-        {
-            DrawText("CURSOR HIDDEN", 20, 10, 20, RED);
-        }
-        else
-        {
-            DrawText("CURSOR VISIBLE", 20, 10, 20, LIME);
-        }
+        // UI Text
+        DrawText(TextFormat("FPS: %i", GetFPS()), 10, 10, 20, GREEN);
+        if (currentType == SAND) DrawText("Selected: SAND", 10, 40, 20, YELLOW);
+        else if (currentType == STONE) DrawText("Selected: STONE", 10, 40, 20, GRAY);
+        else if (currentType == WATER) DrawText("Selected: WATER", 10, 40, 20, BLUE);
 
-        DrawText("Press 'Q' for Sand, 'W' for Stone, 'E' for Water", 20, 30, 15, WHITE);
         EndDrawing();
     }
 
     CloseWindow();
-
     return 0;
 }
