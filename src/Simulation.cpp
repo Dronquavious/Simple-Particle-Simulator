@@ -35,7 +35,7 @@ void Simulation::Update() {
   }
 
   // update from bottom up
-  for (int y = rows - 2; y >= 0; y--) {
+  for (int y = rows - 1; y >= 0; y--) {
     for (int x = 0; x < cols; x++) {
       if (!moved[y][x]) {
         switch (grid[y][x]) {
