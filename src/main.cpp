@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "Simulation.h"
 #include "Renderer.h"
+#include "UI.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -56,9 +57,10 @@ int main() {
     InitWindow(config.screenWidth, config.screenHeight, "Advanced Particle Sim");
     SetTargetFPS(60);
 
-    // create the Simulation Instance and renderer
+    // Instances
     Simulation simulation(config.screenWidth, config.screenHeight, cellSize);
     Renderer renderer(cellSize);
+    UI ui(config.screenWidth, config.screenHeight);
 
     // variables for input
     ParticleType currentType = SAND;
@@ -72,15 +74,10 @@ int main() {
             if (isCursorHidden) HideCursor(); else ShowCursor();
         }
 
-        if (IsKeyPressed(KEY_Q)) currentType = SAND;
-        if (IsKeyPressed(KEY_W)) currentType = STONE;
-        if (IsKeyPressed(KEY_E)) currentType = WATER;
-
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !ui.IsMouseOverUI()) {
             Vector2 mousePos = GetMousePosition();
             int gridX = (int)mousePos.x / cellSize;
             int gridY = (int)mousePos.y / cellSize;
-
             simulation.SetParticle(gridX, gridY, currentType);
         }
 
@@ -92,11 +89,12 @@ int main() {
 
         renderer.Draw(simulation);
 
+        // draw the UI on TOP of the game
+        // returns the new selected type (or the old one if nothing changed)
+        currentType = ui.Draw(currentType);
+
         // UI Text
         DrawText(TextFormat("FPS: %i", GetFPS()), 10, 10, 20, GREEN);
-        if (currentType == SAND) DrawText("Selected: SAND", 10, 40, 20, YELLOW);
-        else if (currentType == STONE) DrawText("Selected: STONE", 10, 40, 20, GRAY);
-        else if (currentType == WATER) DrawText("Selected: WATER", 10, 40, 20, BLUE);
 
         EndDrawing();
     }
