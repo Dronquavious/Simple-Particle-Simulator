@@ -1,11 +1,19 @@
-CMakeLists.txt.user
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-_deps
+# Visual Studio cache/options
+.vs/
+out/
+*.user
+*.aps
+*.suo
+*.opensdf
+*.sdf
+*.cache
+*.ipch
+
+# Build results
+Debug/
+Release/
+x64/
+*.exe
+*.pdb
+*.obj
+*.ilk
