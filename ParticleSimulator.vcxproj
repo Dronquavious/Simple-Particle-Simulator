@@ -141,6 +141,7 @@
   <ItemGroup>
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
+    <None Include="assets\config.ini" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
