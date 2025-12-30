@@ -66,6 +66,8 @@ ParticleType UI::Draw(ParticleType currentType) {
     selected = DrawElementButton("STONE", STONE, 1);
     selected = DrawElementButton("WATER", WATER, 2);
     selected = DrawElementButton("SMOKE", SMOKE, 3);
+    selected = DrawElementButton("FIRE", FIRE, 4);
+    selected = DrawElementButton("WOOD", WOOD, 5);
 
     return selected;
 }
