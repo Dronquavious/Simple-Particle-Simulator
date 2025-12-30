@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "Simulation.h"
+#include "Renderer.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -55,8 +56,9 @@ int main() {
     InitWindow(config.screenWidth, config.screenHeight, "Advanced Particle Sim");
     SetTargetFPS(60);
 
-    // create the Simulation Instance
+    // create the Simulation Instance and renderer
     Simulation simulation(config.screenWidth, config.screenHeight, cellSize);
+    Renderer renderer(cellSize);
 
     // variables for input
     ParticleType currentType = SAND;
@@ -88,23 +90,7 @@ int main() {
         BeginDrawing();
         ClearBackground(BLACK); // changed to black for better contrast
 
-        // draw the Grid
-        const auto& grid = simulation.GetGrid();
-        int rows = simulation.GetRows();
-        int cols = simulation.GetCols();
-
-        for (int y = 0; y < rows; y++) {
-            for (int x = 0; x < cols; x++) {
-                if (grid[y][x] != EMPTY) {
-                    Color color = BLACK;
-                    if (grid[y][x] == SAND) color = YELLOW;
-                    else if (grid[y][x] == STONE) color = DARKGRAY;
-                    else if (grid[y][x] == WATER) color = BLUE;
-
-                    DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, color);
-                }
-            }
-        }
+        renderer.Draw(simulation);
 
         // UI Text
         DrawText(TextFormat("FPS: %i", GetFPS()), 10, 10, 20, GREEN);
