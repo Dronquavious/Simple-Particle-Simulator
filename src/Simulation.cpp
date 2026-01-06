@@ -324,3 +324,24 @@ void Simulation::MoveAcid(int x, int y) {
 
 	moved[y][x] = true;
 }
+
+void Simulation::SetParticleCircle(int centerX, int centerY, int radius, ParticleType type) {
+	int radiusSq = radius * radius; // square it to avoid slow sqrt() calculations
+
+	// iterate over a square bounding box around the circle center
+	for (int y = centerY - radius; y <= centerY + radius; y++) {
+		for (int x = centerX - radius; x <= centerX + radius; x++) {
+
+			// safety check: Is this coordinate on the grid?
+			if (IsWithinBounds(x, y)) {
+				// circle check: Is the distance to center less than radius?
+				int dx = x - centerX;
+				int dy = y - centerY;
+				// x^2 + y^2 < r^2
+				if (dx * dx + dy * dy < radiusSq) {
+					grid[y][x] = type;
+				}
+			}
+		}
+	}
+}
