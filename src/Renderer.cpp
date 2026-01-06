@@ -16,7 +16,7 @@ void Renderer::Draw(const Simulation& simulation) {
 			ParticleType type = grid[y][x];
 
 			if (type != EMPTY) {
-				Color color = BLACK;  // sefault
+				Color color = BLACK;  // default
 
 				// color Palette
 				// will upgrade this later to be more "visual" (varying shades)
