@@ -10,7 +10,7 @@ enum ParticleType {
     SMOKE = 4,
     FIRE = 5,
     WOOD = 6,
-    // new elements will be added here
+    ACID = 7,
 };
 
 class Simulation {
@@ -44,5 +44,6 @@ private:
     void MoveWater(int x, int y);
     void MoveSmoke(int x, int y);
     void MoveFire(int x, int y);
+    void MoveAcid(int x, int y);
     bool IsWithinBounds(int x, int y);
 };
