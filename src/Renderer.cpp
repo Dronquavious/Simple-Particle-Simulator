@@ -5,47 +5,50 @@
 Renderer::Renderer(int cellSize) : cellSize(cellSize) {}
 
 void Renderer::Draw(const Simulation& simulation) {
-  // get the data from the simulation
-  const auto& grid = simulation.GetGrid();
-  int rows = simulation.GetRows();
-  int cols = simulation.GetCols();
+	// get the data from the simulation
+	const auto& grid = simulation.GetGrid();
+	int rows = simulation.GetRows();
+	int cols = simulation.GetCols();
 
-  // loop and Draw
-  for (int y = 0; y < rows; y++) {
-    for (int x = 0; x < cols; x++) {
-      ParticleType type = grid[y][x];
+	// loop and Draw
+	for (int y = 0; y < rows; y++) {
+		for (int x = 0; x < cols; x++) {
+			ParticleType type = grid[y][x];
 
-      if (type != EMPTY) {
-        Color color = BLACK;  // sefault
+			if (type != EMPTY) {
+				Color color = BLACK;  // sefault
 
-        // color Palette
-        // will upgrade this later to be more "visual" (varying shades)
-        switch (type) {
-          case SAND:
-            color = YELLOW;
-            break;
-          case STONE:
-            color = DARKGRAY;
-            break;
-          case WATER:
-            color = BLUE;
-            break;
-          case SMOKE:
-            color = LIGHTGRAY;
-            break;
-          case FIRE:
-            color = ORANGE;
-            break;
-          case WOOD:
-            color = BROWN;
-            break;
-          default:
-            color = MAGENTA;
-            break;  // error color
-        }
+				// color Palette
+				// will upgrade this later to be more "visual" (varying shades)
+				switch (type) {
+				case SAND:
+					color = YELLOW;
+					break;
+				case STONE:
+					color = DARKGRAY;
+					break;
+				case WATER:
+					color = BLUE;
+					break;
+				case SMOKE:
+					color = LIGHTGRAY;
+					break;
+				case FIRE:
+					color = ORANGE;
+					break;
+				case WOOD:
+					color = BROWN;
+					break;
+				case ACID:  
+					color = LIME; 
+					break;
+				default:
+					color = MAGENTA;
+					break;  // error color
+				}
 
-        DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, color);
-      }
-    }
-  }
+				DrawRectangle(x * cellSize, y * cellSize, cellSize, cellSize, color);
+			}
+		}
+	}
 }

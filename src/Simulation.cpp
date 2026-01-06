@@ -3,258 +3,324 @@
 #include "raylib.h"
 
 Simulation::Simulation(int width, int height, int cellSize) {
-  // calculate grid dimensions
-  cols = width / cellSize;
-  rows = height / cellSize;
+	// calculate grid dimensions
+	cols = width / cellSize;
+	rows = height / cellSize;
 
-  // initialize the vectors
-  grid.resize(rows, std::vector<ParticleType>(cols, EMPTY));
-  moved.resize(rows, std::vector<bool>(cols, false));
+	// initialize the vectors
+	grid.resize(rows, std::vector<ParticleType>(cols, EMPTY));
+	moved.resize(rows, std::vector<bool>(cols, false));
 }
 
 void Simulation::SetParticle(int x, int y, ParticleType type) {
-  if (IsWithinBounds(x, y)) {
-    grid[y][x] = type;
-  }
+	if (IsWithinBounds(x, y)) {
+		grid[y][x] = type;
+	}
 }
 
 const std::vector<std::vector<ParticleType>>& Simulation::GetGrid() const {
-  return grid;
+	return grid;
 }
 
 bool Simulation::IsWithinBounds(int x, int y) {
-  return x >= 0 && x < cols && y >= 0 && y < rows;
+	return x >= 0 && x < cols && y >= 0 && y < rows;
 }
 
 void Simulation::Update() {
-  // reset moved status
-  for (int y = 0; y < rows; y++) {
-    for (int x = 0; x < cols; x++) {
-      moved[y][x] = false;
-    }
-  }
+	// reset moved status
+	for (int y = 0; y < rows; y++) {
+		for (int x = 0; x < cols; x++) {
+			moved[y][x] = false;
+		}
+	}
 
-  // update from bottom up
-  for (int y = rows - 1; y >= 0; y--) {
-    for (int x = 0; x < cols; x++) {
-      if (!moved[y][x]) {
-        switch (grid[y][x]) {
-          case SAND:
-            MoveSand(x, y);
-            break;
-          case WATER:
-            MoveWater(x, y);
-            break;
-          case SMOKE:
-            MoveSmoke(x, y);
-            break;
-          case FIRE:
-            MoveFire(x, y);
-            break;
-          default:
-            break;
-        }
-      }
-    }
-  }
+	// update from bottom up
+	for (int y = rows - 1; y >= 0; y--) {
+		for (int x = 0; x < cols; x++) {
+			if (!moved[y][x]) {
+				switch (grid[y][x]) {
+				case SAND:
+					MoveSand(x, y);
+					break;
+				case WATER:
+					MoveWater(x, y);
+					break;
+				case SMOKE:
+					MoveSmoke(x, y);
+					break;
+				case FIRE:
+					MoveFire(x, y);
+					break;
+				case ACID:
+					MoveAcid(x, y);
+				default:
+					break;
+				}
+			}
+		}
+	}
 }
 
 void Simulation::MoveSand(int x, int y) {
-  // try down
-  if (y + 1 < rows && grid[y + 1][x] == EMPTY) {
-    grid[y][x] = EMPTY;
-    grid[y + 1][x] = SAND;
-    moved[y][x] = true;
-    moved[y + 1][x] = true;
-    return;
-  }
+	// try down
+	if (y + 1 < rows && grid[y + 1][x] == EMPTY) {
+		grid[y][x] = EMPTY;
+		grid[y + 1][x] = SAND;
+		moved[y][x] = true;
+		moved[y + 1][x] = true;
+		return;
+	}
 
-  int dir = GetRandomValue(0, 1) ? 1 : -1;
+	int dir = GetRandomValue(0, 1) ? 1 : -1;
 
-  // try diagonals (random order)
-  int dx[2] = {dir, -dir};
-  for (int i = 0; i < 2; i++) {
-    int nx = x + dx[i];
-    int ny = y + 1;
-    if (IsWithinBounds(nx, ny) && grid[ny][nx] == EMPTY) {
-      grid[y][x] = EMPTY;
-      grid[ny][nx] = SAND;
-      moved[y][x] = true;
-      moved[ny][nx] = true;
-      return;
-    }
-  }
+	// try diagonals (random order)
+	int dx[2] = { dir, -dir };
+	for (int i = 0; i < 2; i++) {
+		int nx = x + dx[i];
+		int ny = y + 1;
+		if (IsWithinBounds(nx, ny) && grid[ny][nx] == EMPTY) {
+			grid[y][x] = EMPTY;
+			grid[ny][nx] = SAND;
+			moved[y][x] = true;
+			moved[ny][nx] = true;
+			return;
+		}
+	}
 
-  moved[y][x] = true;
+	moved[y][x] = true;
 }
 
 void Simulation::MoveWater(int x, int y) {
-  // down
-  if (y + 1 < rows && grid[y + 1][x] == EMPTY) {
-    grid[y][x] = EMPTY;
-    grid[y + 1][x] = WATER;
-    moved[y][x] = true;
-    moved[y + 1][x] = true;
-    return;
-  }
+	// down
+	if (y + 1 < rows && grid[y + 1][x] == EMPTY) {
+		grid[y][x] = EMPTY;
+		grid[y + 1][x] = WATER;
+		moved[y][x] = true;
+		moved[y + 1][x] = true;
+		return;
+	}
 
-  int dir = GetRandomValue(0, 1) ? 1 : -1;
-  int dx[2] = {dir, -dir};
+	int dir = GetRandomValue(0, 1) ? 1 : -1;
+	int dx[2] = { dir, -dir };
 
-  // diagonals
-  for (int i = 0; i < 2; i++) {
-    int nx = x + dx[i];
-    int ny = y + 1;
-    if (IsWithinBounds(nx, ny) && grid[ny][nx] == EMPTY) {
-      grid[y][x] = EMPTY;
-      grid[ny][nx] = WATER;
-      moved[y][x] = true;
-      moved[ny][nx] = true;
-      return;
-    }
-  }
+	// diagonals
+	for (int i = 0; i < 2; i++) {
+		int nx = x + dx[i];
+		int ny = y + 1;
+		if (IsWithinBounds(nx, ny) && grid[ny][nx] == EMPTY) {
+			grid[y][x] = EMPTY;
+			grid[ny][nx] = WATER;
+			moved[y][x] = true;
+			moved[ny][nx] = true;
+			return;
+		}
+	}
 
-  // horizontal spread
-  for (int i = 0; i < 2; i++) {
-    int nx = x + dx[i];
-    if (IsWithinBounds(nx, y) && grid[y][nx] == EMPTY) {
-      grid[y][x] = EMPTY;
-      grid[y][nx] = WATER;
-      moved[y][x] = true;
-      moved[y][nx] = true;
-      return;
-    }
-  }
+	// horizontal spread
+	for (int i = 0; i < 2; i++) {
+		int nx = x + dx[i];
+		if (IsWithinBounds(nx, y) && grid[y][nx] == EMPTY) {
+			grid[y][x] = EMPTY;
+			grid[y][nx] = WATER;
+			moved[y][x] = true;
+			moved[y][nx] = true;
+			return;
+		}
+	}
 
-  moved[y][x] = true;
+	moved[y][x] = true;
 }
 
 // moves just like water but upwards
 void Simulation::MoveSmoke(int x, int y) {
-  // dissipate
-  if (GetRandomValue(0, 500) == 0) {
-    grid[y][x] = EMPTY;
-    moved[y][x] = true;
-    return;
-  }
+	// dissipate
+	if (GetRandomValue(0, 500) == 0) {
+		grid[y][x] = EMPTY;
+		moved[y][x] = true;
+		return;
+	}
 
-  // float / flicker
-  if (GetRandomValue(0, 3) == 0) {
-    moved[y][x] = true;
-    return;
-  }
+	// float / flicker
+	if (GetRandomValue(0, 3) == 0) {
+		moved[y][x] = true;
+		return;
+	}
 
-  int dir = GetRandomValue(0, 1) ? 1 : -1;
-  int dx[2] = {dir, -dir};
+	int dir = GetRandomValue(0, 1) ? 1 : -1;
+	int dx[2] = { dir, -dir };
 
-  // up
-  if (y > 0 && grid[y - 1][x] == EMPTY) {
-    grid[y][x] = EMPTY;
-    grid[y - 1][x] = SMOKE;
-    moved[y][x] = true;
-    moved[y - 1][x] = true;
-    return;
-  }
+	// up
+	if (y > 0 && grid[y - 1][x] == EMPTY) {
+		grid[y][x] = EMPTY;
+		grid[y - 1][x] = SMOKE;
+		moved[y][x] = true;
+		moved[y - 1][x] = true;
+		return;
+	}
 
-  // diagonals up
-  for (int i = 0; i < 2; i++) {
-    int nx = x + dx[i];
-    int ny = y - 1;
-    if (IsWithinBounds(nx, ny) && grid[ny][nx] == EMPTY) {
-      grid[y][x] = EMPTY;
-      grid[ny][nx] = SMOKE;
-      moved[y][x] = true;
-      moved[ny][nx] = true;
-      return;
-    }
-  }
+	// diagonals up
+	for (int i = 0; i < 2; i++) {
+		int nx = x + dx[i];
+		int ny = y - 1;
+		if (IsWithinBounds(nx, ny) && grid[ny][nx] == EMPTY) {
+			grid[y][x] = EMPTY;
+			grid[ny][nx] = SMOKE;
+			moved[y][x] = true;
+			moved[ny][nx] = true;
+			return;
+		}
+	}
 
-  // horizontal drift
-  for (int i = 0; i < 2; i++) {
-    int nx = x + dx[i];
-    if (IsWithinBounds(nx, y) && grid[y][nx] == EMPTY) {
-      grid[y][x] = EMPTY;
-      grid[y][nx] = SMOKE;
-      moved[y][x] = true;
-      moved[y][nx] = true;
-      return;
-    }
-  }
+	// horizontal drift
+	for (int i = 0; i < 2; i++) {
+		int nx = x + dx[i];
+		if (IsWithinBounds(nx, y) && grid[y][nx] == EMPTY) {
+			grid[y][x] = EMPTY;
+			grid[y][nx] = SMOKE;
+			moved[y][x] = true;
+			moved[y][nx] = true;
+			return;
+		}
+	}
 
-  moved[y][x] = true;
+	moved[y][x] = true;
 }
 
 void Simulation::MoveFire(int x, int y) {
-  // ignite nearby flammable materials
-  for (int dy = -1; dy <= 1; dy++) {
-    for (int dx = -1; dx <= 1; dx++) {
-      int nx = x + dx;
-      int ny = y + dy;
-      if (IsWithinBounds(nx, ny) && grid[ny][nx] == WOOD) {
-        if (GetRandomValue(0, 20) == 0) {
-          grid[ny][nx] = FIRE;
-          moved[ny][nx] = true;
-        }
-      }
-    }
-  }
+	// ignite nearby flammable materials
+	for (int dy = -1; dy <= 1; dy++) {
+		for (int dx = -1; dx <= 1; dx++) {
+			int nx = x + dx;
+			int ny = y + dy;
+			if (IsWithinBounds(nx, ny) && grid[ny][nx] == WOOD) {
+				if (GetRandomValue(0, 20) == 0) {
+					grid[ny][nx] = FIRE;
+					moved[ny][nx] = true;
+				}
+			}
+		}
+	}
 
-  // chance to extinguish
-  if (GetRandomValue(0, 500) == 0) {
-    grid[y][x] = EMPTY;
-    moved[y][x] = true;
-    return;
-  }
+	// chance to extinguish
+	if (GetRandomValue(0, 500) == 0) {
+		grid[y][x] = EMPTY;
+		moved[y][x] = true;
+		return;
+	}
 
-  // chance to turn into smoke
-  if (GetRandomValue(0, 10) == 0) {
-    grid[y][x] = SMOKE;
-    moved[y][x] = true;
-    return;
-  }
+	// chance to turn into smoke
+	if (GetRandomValue(0, 10) == 0) {
+		grid[y][x] = SMOKE;
+		moved[y][x] = true;
+		return;
+	}
 
-  // chance to flicker (stay in place)
-  if (GetRandomValue(0, 4) == 0) {
-    moved[y][x] = true;
-    return;
-  }
+	// chance to flicker (stay in place)
+	if (GetRandomValue(0, 4) == 0) {
+		moved[y][x] = true;
+		return;
+	}
 
-  int dir = GetRandomValue(0, 1) ? 1 : -1;
+	int dir = GetRandomValue(0, 1) ? 1 : -1;
 
-  // try up
-  if (y > 0 && grid[y - 1][x] == EMPTY) {
-    grid[y][x] = EMPTY;
-    grid[y - 1][x] = FIRE;
-    moved[y][x] = true;
-    moved[y - 1][x] = true;
-    return;
-  }
+	// try up
+	if (y > 0 && grid[y - 1][x] == EMPTY) {
+		grid[y][x] = EMPTY;
+		grid[y - 1][x] = FIRE;
+		moved[y][x] = true;
+		moved[y - 1][x] = true;
+		return;
+	}
 
-  // try diagonals (randomized)
-  int dx[2] = {dir, -dir};
-  for (int i = 0; i < 2; i++) {
-    int nx = x + dx[i];
-    int ny = y - 1;
-    if (IsWithinBounds(nx, ny) && grid[ny][nx] == EMPTY) {
-      grid[y][x] = EMPTY;
-      grid[ny][nx] = FIRE;
-      moved[y][x] = true;
-      moved[ny][nx] = true;
-      return;
-    }
-  }
+	// try diagonals (randomized)
+	int dx[2] = { dir, -dir };
+	for (int i = 0; i < 2; i++) {
+		int nx = x + dx[i];
+		int ny = y - 1;
+		if (IsWithinBounds(nx, ny) && grid[ny][nx] == EMPTY) {
+			grid[y][x] = EMPTY;
+			grid[ny][nx] = FIRE;
+			moved[y][x] = true;
+			moved[ny][nx] = true;
+			return;
+		}
+	}
 
-  // horizontal drift
-  for (int i = 0; i < 2; i++) {
-    int nx = x + dx[i];
-    if (IsWithinBounds(nx, y) && grid[y][nx] == EMPTY) {
-      grid[y][x] = EMPTY;
-      grid[y][nx] = FIRE;
-      moved[y][x] = true;
-      moved[y][nx] = true;
-      return;
-    }
-  }
+	// horizontal drift
+	for (int i = 0; i < 2; i++) {
+		int nx = x + dx[i];
+		if (IsWithinBounds(nx, y) && grid[y][nx] == EMPTY) {
+			grid[y][x] = EMPTY;
+			grid[y][nx] = FIRE;
+			moved[y][x] = true;
+			moved[y][nx] = true;
+			return;
+		}
+	}
 
-  moved[y][x] = true;
+	moved[y][x] = true;
+}
+
+void Simulation::MoveAcid(int x, int y) {
+	// check neighbors, if dissolvable destroy iy
+	int dir = GetRandomValue(0, 1) ? 1 : -1;
+	int dx[3] = { 0, dir, -dir }; // check down, then sides
+	int dy[3] = { 1, 0, 0 };      // relative Y offsets
+
+	for (int i = 0; i < 3; i++) {
+		int nx = x + dx[i];
+		int ny = y + dy[i];
+
+		if (IsWithinBounds(nx, ny)) {
+			ParticleType target = grid[ny][nx];
+			// things Acid can eat:
+			if (target == SAND || target == WOOD || target == STONE) {
+				if (GetRandomValue(0, 10) == 0) { // 10% chance to dissolve per frame
+					grid[ny][nx] = EMPTY; // destroy the target
+					grid[y][x] = EMPTY;   // destroy the Acid (Reaction complete)
+					return; // stop moving, we are dead
+				}
+			}
+		}
+	}
+
+	// movement (just like water)
+	// down
+	if (y + 1 < rows && grid[y + 1][x] == EMPTY) {
+		grid[y][x] = EMPTY;
+		grid[y + 1][x] = ACID;
+		moved[y][x] = true;
+		moved[y + 1][x] = true;
+		return;
+	}
+
+	int dir2 = GetRandomValue(0, 1) ? 1 : -1;
+	int dx2[2] = { dir2, -dir2 };
+
+	// diagonals
+	for (int i = 0; i < 2; i++) {
+		int nx = x + dx2[i];
+		int ny = y + 1;
+		if (IsWithinBounds(nx, ny) && grid[ny][nx] == EMPTY) {
+			grid[y][x] = EMPTY;
+			grid[ny][nx] = ACID;
+			moved[y][x] = true;
+			moved[ny][nx] = true;
+			return;
+		}
+	}
+
+	// horizontal spread
+	for (int i = 0; i < 2; i++) {
+		int nx = x + dx[i];
+		if (IsWithinBounds(nx, y) && grid[y][nx] == EMPTY) {
+			grid[y][x] = EMPTY;
+			grid[y][nx] = ACID;
+			moved[y][x] = true;
+			moved[y][nx] = true;
+			return;
+		}
+	}
+
+	moved[y][x] = true;
 }
